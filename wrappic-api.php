@@ -16,7 +16,6 @@ require_once 'vendor/autoload.php';
 // Settings page
 if ( is_admin() ){
   add_action( 'admin_menu', 'create_wrappic_settings_page' );
-  add_action( 'admin_init', 'register_settings' );
 }
 
 add_action( 'admin_post_update_wrappic_settings', 'wrappic_handle_save' );
@@ -25,11 +24,24 @@ add_action( 'publish_post', 'post_published_notification', 10, 2 );
 
 function post_published_notification( $ID, $post ) {
     
-    // Validate
+    // Return when there is no api token set
     if(!strlen(get_option('api_token')) > 0) {
-        // Throw error
-        
+        return;
     }
+    
+    // Get the post information
+    $title = $post->post_title;
+   
+    $client = new GuzzleHttp\Client();
+    $api_token = get_option('api_token');
+    $response = $client->post('http://www.wrappic.dev/api/v1/post',
+            array(
+                'form_params' => [
+                    'api_token' => $api_token,
+                    'title' => $title,
+                    ]
+                )
+        );
 }
 
 function create_wrappic_settings_page() {
@@ -68,10 +80,10 @@ function wrappic_plugin_options() {
    <h3><?php _e("Wrappi api settings", "wrappic-api"); ?></h3>
    <p>
    <label><?php _e("Api token:", "wrappic-api"); ?></label>
-   <input class="" type="text" name="api_token" value="<?php echo get_option('api_token'); ?>" />
+   <input class="" type="text" name="api_token" size="64" value="<?php echo get_option('api_token'); ?>" />
    </p>
 
-   <input class="button button-primary" type="submit" value="<?php _e("Save", "wrappic-api"); ?>" />
+   <input class="button button-primary" type="submit" value="<?php _e("Opslaan", "wrappic-api"); ?>" />
 
     </form>
     <?php
