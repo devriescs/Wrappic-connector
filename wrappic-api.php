@@ -20,6 +20,7 @@ if ( is_admin() ){
 
 add_action( 'admin_post_update_wrappic_settings', 'wrappic_handle_save' );
 add_action( 'publish_post', 'post_published_notification', 10, 2 );
+add_action( 'rest_api_init', 'insert_thumbnail_url' );
 
 function post_published_notification( $ID, $post ) {
     
@@ -33,10 +34,11 @@ function post_published_notification( $ID, $post ) {
    
     $client = new GuzzleHttp\Client();
     $api_token = get_option('api_token');
-    $response = $client->post('http://www.wrappic.dev/api/v1/post',
+    $url = 'http://185.107.225.190/api/v1/post?api_token=' + $api_token;
+    
+    $response = $client->post($url,
                               array(
                                   'form_params' => [
-                                      'api_token' => $api_token,
                                       'title' => $title,
                                   ]
                               )
@@ -97,3 +99,43 @@ function wrappic_handle_save() {
    header("Location: ".$redirect_url);
    exit;
 }
+
+//Get image URL
+function get_thumbnail_url($post){
+    if(has_post_thumbnail($post['id'])){
+        $imgArray = wp_get_attachment_image_src( get_post_thumbnail_id( $post['id'] ), 'thumbnail' ); // replace 'full' with 'thumbnail' to get a thumbnail
+        $imgURL = $imgArray[0];
+        return $imgURL;
+    } else {
+        return false;
+    }
+}
+function get_image_url($post){
+    if(has_post_thumbnail($post['id'])){
+        $imgArray = wp_get_attachment_image_src( get_post_thumbnail_id( $post['id'] ), 'medium' ); // replace 'full' with 'thumbnail' to get a thumbnail
+        $imgURL = $imgArray[0];
+        return $imgURL;
+    } else {
+        return false;
+    }
+}
+
+//integrate with WP-REST-API
+function insert_thumbnail_url() {
+     register_rest_field( 'post',
+                          'thumbnail_url',  //key-name in json response
+                           array(
+                             'get_callback'    => 'get_thumbnail_url',
+                             'update_callback' => null,
+                             'schema'          => null,
+                             )
+                         );
+    register_rest_field( 'post',
+                          'image_url',  //key-name in json response
+                           array(
+                             'get_callback'    => 'get_image_url',
+                             'update_callback' => null,
+                             'schema'          => null,
+                             )
+                         );
+     }
