@@ -19,31 +19,7 @@ if ( is_admin() ){
 }
 
 add_action( 'admin_post_update_wrappic_settings', 'wrappic_handle_save' );
-add_action( 'publish_post', 'post_published_notification', 10, 2 );
 add_action( 'rest_api_init', 'insert_thumbnail_url' );
-
-function post_published_notification( $ID, $post ) {
-    
-    // Return when there is no api token set
-    if(!strlen(get_option('api_token')) > 0) {
-        return;
-    }
-    
-    // Get the post information
-    $title = $post->post_title;
-   
-    $client = new GuzzleHttp\Client();
-    $api_token = get_option('api_token');
-    $url = 'http://185.107.225.190/api/v1/post?api_token=' + $api_token;
-    
-    $response = $client->post($url,
-                              array(
-                                  'form_params' => [
-                                      'title' => $title,
-                                  ]
-                              )
-                             );
-}
 
 function create_wrappic_settings_page() {
     add_submenu_page( "options-general.php",    // Which menu parent
